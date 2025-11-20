@@ -1,9 +1,12 @@
 package topos.juego;
 
+import java.util.List;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 
+import topos.elementos.Elemento;
+import topos.elementos.ElementoActivo;
 import topos.geometria.Direccion;
 import topos.geometria.Point;
 import topos.paneles.Estado;
@@ -16,6 +19,7 @@ public class Partida {
 	private int disparosRestantes;
 	private int puntos;
 	private ArrayList<Panel> paneles;
+	private List<Elemento> elementos;
 	
 	//Atributo de implementación
 	private LocalDateTime fechaInicio;
@@ -39,6 +43,9 @@ public class Partida {
 	public ArrayList<Panel> getPaneles() {
 		//copia para evitar aliasing
 		return new ArrayList<>(paneles);
+	}	
+	public List<Elemento> getElementos(){
+		return new ArrayList<Elemento>(elementos);
 	}
 	
 	//Propiedades calculadas
@@ -70,6 +77,7 @@ public class Partida {
 		this.puntos = 0;
 		this.disparosRestantes = configuracion.disparos();
 		this.paneles = new ArrayList<Panel>();
+		this.elementos = new ArrayList<Elemento>();
 		this.fechaInicio = null;
 	}
 	
@@ -125,6 +133,23 @@ public class Partida {
 	
 	public void disparar() {
 		this.disparosRestantes--;
+		
+		if(isVisible(objetivo)) {
+			List<Elemento> elementos = getElementos(objetivo);
+			if(!elementos.isEmpty()) {
+				Elemento primero = elementos.getFirst();
+				//Comprobar si es puntuable
+				if(primero instanceof Puntuable puntuable) {
+					this.puntos += puntuable.getPuntos();
+				}
+				//Compruebo si es recargable
+				if(primero instanceof Recargable recargable) {
+					this.puntos += recargable.getMunicion();
+				}
+				this.elementos.remove(primero);
+			}
+		}
+		
 		ArrayList<Panel> panelesDisponibles = getPaneles(objetivo);
 		for(Panel p: panelesDisponibles) {
 			if(p.getEstado() == Estado.LEVANTADO) {
@@ -134,11 +159,16 @@ public class Partida {
 		}
 	}
 	
-	public void actualizar() {
+	public void actualizar() {	
 		if(getSegundosRestantes() % 5 == 0) {
 			for(Panel p: paneles) {
 				if(p.getEstado() == Estado.DERRIBADO) {
 					p.levantar();
+				}
+			}
+			for(Elemento elemento: elementos) {
+				if(elemento instanceof ElementoActivo activo){
+					activo.actualizar(getContextoVisibilidad(activo.getPosicion()));
 				}
 			}
 		}
@@ -146,6 +176,11 @@ public class Partida {
 	
 	public ArrayList<Imagen> getImagenes(){
 		ArrayList<Imagen> lista = new ArrayList<Imagen>();
+		
+		for(Elemento e: elementos) {
+			lista.add(new Imagen(e.getRutaImagen(), e.getPosicion().x(), e.getPosicion().y()));
+		}
+		
 		for(Panel p: this.paneles) {
 			if(p.getRutaImagen() != null) {
 				lista.add(new Imagen(p.getRutaImagen(), p.getPosicion().x(),
@@ -153,7 +188,80 @@ public class Partida {
 			}
 		}
 		lista.add(new Imagen(RUTA_OBJETIVO, objetivo.x(), objetivo.y()));
+		
 		return lista;
+	}
+	
+	public boolean addElemento(Elemento elemento) {
+		if(isPosicionValida(elemento.getPosicion())) {
+			elementos.addFirst(elemento);
+			return true;
+		}
+		return false;
+	}
+	
+	public List<Elemento> getElementos(Point posicion){
+		ArrayList<Elemento> listaElementos = new ArrayList<Elemento>();
+		for(Elemento e: elementos) {
+			if(e.getPosicion().equals(posicion)) {
+				listaElementos.add(e);
+			}
+		}
+		return listaElementos;
+	}
+	
+	private ContextoVisibilidad getContextoVisibilidad(Point posicion) {
+		var centro = Visibilidad.NO_VALIDA;
+		var arriba = Visibilidad.NO_VALIDA;
+		var abajo = Visibilidad.NO_VALIDA;
+		var izquierda = Visibilidad.NO_VALIDA;
+		var derecha = Visibilidad.NO_VALIDA;
+		
+		if(isPosicionValida(posicion)) {
+			if(isVisible(posicion)) {
+				centro = Visibilidad.VISIBLE;
+			}else {
+				centro = Visibilidad.OCULTA;
+			}
+		}
+		
+		Point desplazada = posicion.desplazar(Direccion.ARRIBA);
+		if(isPosicionValida(desplazada)) {
+			if(isVisible(desplazada)) {
+				arriba = Visibilidad.VISIBLE;
+			}else {
+				arriba = Visibilidad.OCULTA;
+			}
+		}
+		
+		desplazada = posicion.desplazar(Direccion.ABAJO);
+		if(isPosicionValida(desplazada)) {
+			if(isVisible(desplazada)) {
+				abajo = Visibilidad.VISIBLE;
+			}else {
+				abajo = Visibilidad.OCULTA;
+			}
+		}
+		
+		desplazada = posicion.desplazar(Direccion.IZQUIERDA);
+		if(isPosicionValida(desplazada)) {
+			if(isVisible(desplazada)) {
+				izquierda = Visibilidad.VISIBLE;
+			}else {
+				izquierda = Visibilidad.OCULTA;
+			}
+		}
+		
+		desplazada = posicion.desplazar(Direccion.DERECHA);
+		if(isPosicionValida(desplazada)) {
+			if(isVisible(desplazada)) {
+				derecha = Visibilidad.VISIBLE;
+			}else {
+				derecha = Visibilidad.OCULTA;
+			}
+		}
+		
+		return new ContextoVisibilidad(centro,arriba,abajo,izquierda,derecha);
 	}
 	
 	//Métodos de Object
