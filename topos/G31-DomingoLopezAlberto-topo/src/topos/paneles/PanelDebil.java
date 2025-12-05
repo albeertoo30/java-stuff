@@ -45,5 +45,12 @@ public class PanelDebil extends Panel {
 	public String toString() {
 		return super.toString() + "[numDerribos=" + numDerribos + "]";
 	}
-		
+
+	@Override
+	public Object clone() {
+		return (PanelDebil) super.clone();
+	}
+	
+	
+	
 }

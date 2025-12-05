@@ -3,7 +3,7 @@ package topos.paneles;
 import topos.geometria.Direccion;
 import topos.geometria.Point;
 
-public class Panel {
+public class Panel implements Cloneable{
 	
 	private Point posicion;
 	private Estado estado;
@@ -55,10 +55,29 @@ public class Panel {
 		return "imagenes/panel-basico.gif";
 	}
 	
-	
 	@Override
 	public String toString() {
 		return getClass().getName() + " [posicion=" + posicion + ", estado=" + estado + "]";
-	}	
+	}
+	
+	public Panel copiaSuperficial() {
+		try {
+			Object copia = super.clone();
+			if(copia instanceof Panel p) {
+				return p;
+			}
+		} catch (CloneNotSupportedException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	@Override
+	public Object clone() {
+		Panel copia = copiaSuperficial();
+		return copia;
+	}
+	
+	
 	
 }

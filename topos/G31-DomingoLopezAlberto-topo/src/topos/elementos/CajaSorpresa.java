@@ -3,8 +3,6 @@ package topos.elementos;
 import java.util.Random;
 
 import topos.geometria.Point;
-import topos.juego.Puntuable;
-import topos.juego.Recargable;
 
 public class CajaSorpresa extends Elemento implements Puntuable, Recargable{
 

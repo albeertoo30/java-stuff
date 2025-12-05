@@ -1,7 +1,7 @@
 package topos.juego;
 
 import java.awt.Color;
-import java.util.ArrayList;
+import java.util.List;
 
 import topos.geometria.Direccion;
 import topos.vista1.Alarma;
@@ -59,7 +59,7 @@ public class Programa {
 				}
 			}
 			partida.actualizar();
-			ArrayList<Imagen> imagenes = partida.getImagenes();
+			List<Imagen> imagenes = partida.getImagenes();
 			for(Imagen i: imagenes) {
 				pantalla.addImagen(i.x(), i.y(), i.ruta());
 			}

@@ -51,6 +51,10 @@ public class PanelResistente extends Panel{
 		return super.toString() + "[dureza=" + dureza + ", "
 				+ "contadorGolpes=" + contadorGolpes + "]";
 	}
+	@Override
+	public Object clone(){
+		return (PanelResistente) super.clone();
+	}
 	
 	
 	

@@ -20,4 +20,6 @@ public abstract class Elemento {
 	}
 	
 	public abstract String getRutaImagen();
+	
+	
 }

@@ -1,12 +1,20 @@
 package topos.juego;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
 
+import topos.elementos.ComparadorElementos;
 import topos.elementos.Elemento;
 import topos.elementos.ElementoActivo;
+import topos.elementos.Puntuable;
+import topos.elementos.Recargable;
 import topos.geometria.Direccion;
 import topos.geometria.Point;
 import topos.paneles.Estado;
@@ -18,11 +26,12 @@ public class Partida {
 	private Point objetivo;
 	private int disparosRestantes;
 	private int puntos;
-	private ArrayList<Panel> paneles;
+	private List<Panel> paneles;
 	private List<Elemento> elementos;
 	
-	//Atributo de implementación
+	//Atributos de implementación
 	private LocalDateTime fechaInicio;
+	private Map<Point, List<Panel>> panelesPosicion;
 	
 	//Constantes
 	public static final String RUTA_OBJETIVO = "imagenes/objetivo.png";
@@ -40,12 +49,13 @@ public class Partida {
 	public int getPuntos() {
 		return puntos;
 	}
-	public ArrayList<Panel> getPaneles() {
-		//copia para evitar aliasing
-		return new ArrayList<>(paneles);
+	public List<Panel> getPaneles() {
+		//vista no modificable
+		return Collections.unmodifiableList(paneles);
 	}	
 	public List<Elemento> getElementos(){
-		return new ArrayList<Elemento>(elementos);
+		//vista no modificable
+		return Collections.unmodifiableList(elementos);
 	}
 	
 	//Propiedades calculadas
@@ -70,7 +80,7 @@ public class Partida {
 		return isIniciada() && !isFinalizada() && disparosRestantes != 0;
 	}
 	
-	// Constructores
+	// CONSTRUCTOR 1
 	public Partida(ConfigPartida configuracion) {
 		this.configuracion = configuracion;
 		this.objetivo = new Point(0,0);
@@ -79,6 +89,28 @@ public class Partida {
 		this.paneles = new ArrayList<Panel>();
 		this.elementos = new ArrayList<Elemento>();
 		this.fechaInicio = null;
+		this.panelesPosicion = new HashMap<Point, List<Panel>>();
+		for(int x=0; x < configuracion.ancho(); x++) {
+			for(int y=0; y < configuracion.alto(); y++) {
+				Point p = new Point(x, y);
+				panelesPosicion.put(p, new LinkedList<Panel>());
+			}
+		}
+	}
+	
+	// CONSTRUCTOR 2
+	public Partida(ConfigPartida configuracion, Panel... semillas) {
+		this(configuracion);
+		Random random = new Random();
+		for(int x=0; x < configuracion.ancho(); x++) {
+			for(int y=0; y < configuracion.alto(); y++) {
+				Point pos = new Point(x, y);
+				Panel semilla = semillas[random.nextInt(semillas.length)];
+				Panel clonado = (Panel) semilla.clone();
+				clonado.situar(pos);
+				this.addPanel(clonado);
+			}
+		}
 	}
 	
 	// Funcionalidad
@@ -89,18 +121,26 @@ public class Partida {
 	
 	public boolean addPanel(Panel panel) {
 		if(isPosicionValida(panel.getPosicion())) {
-			paneles.addFirst(panel);
+			paneles.add(panel);
+			
+			/*Obtenemos la lista de paneles en la posición que se quiere
+			añadir el panel, y añadimos el panel en la lista asociada
+			a su posición*/
+			List<Panel> lista = panelesPosicion.get(panel.getPosicion());
+			if(lista != null) {
+				lista.add(panel);
+			}
 			return true;
 		}
 		return false;
 	}
 	
-	public ArrayList<Panel> getPaneles(Point posicion){
-		ArrayList<Panel> listaPaneles = new ArrayList<Panel>();
-		for(Panel p: paneles) {
-			if(p.getPosicion().equals(posicion)) {
-				listaPaneles.add(p);
-			}
+	public List<Panel> getPaneles(Point posicion){
+		List<Panel> listaPaneles = new ArrayList<Panel>();
+		
+		if(isPosicionValida(posicion)) {
+			listaPaneles = this.panelesPosicion.get(posicion);
+			return Collections.unmodifiableList(listaPaneles);
 		}
 		return listaPaneles;
 	}
@@ -150,7 +190,7 @@ public class Partida {
 			}
 		}
 		
-		ArrayList<Panel> panelesDisponibles = getPaneles(objetivo);
+		List<Panel> panelesDisponibles = getPaneles(objetivo);
 		for(Panel p: panelesDisponibles) {
 			if(p.getEstado() == Estado.LEVANTADO) {
 				p.golpear();
@@ -166,7 +206,7 @@ public class Partida {
 					p.levantar();
 				}
 			}
-			for(Elemento elemento: elementos) {
+			for(Elemento elemento: this.getElementosOrdenados()) {
 				if(elemento instanceof ElementoActivo activo){
 					activo.actualizar(getContextoVisibilidad(activo.getPosicion()));
 				}
@@ -174,7 +214,7 @@ public class Partida {
 		}
 	}
 	
-	public ArrayList<Imagen> getImagenes(){
+	public List<Imagen> getImagenes(){
 		ArrayList<Imagen> lista = new ArrayList<Imagen>();
 		
 		for(Elemento e: elementos) {
@@ -262,6 +302,14 @@ public class Partida {
 		}
 		
 		return new ContextoVisibilidad(centro,arriba,abajo,izquierda,derecha);
+	}
+	
+	
+	//Añadido tras sesión 10
+	public List<Elemento> getElementosOrdenados(){
+		List<Elemento> listaOrdenada = new ArrayList<Elemento>(elementos);
+		listaOrdenada.sort(new ComparadorElementos());
+		return listaOrdenada;
 	}
 	
 	//Métodos de Object

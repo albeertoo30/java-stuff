@@ -6,7 +6,6 @@ import java.time.LocalDateTime;
 import topos.geometria.Direccion;
 import topos.geometria.Point;
 import topos.juego.ContextoVisibilidad;
-import topos.juego.Puntuable;
 
 public abstract class ElementoActivo extends Elemento implements Puntuable{
 
@@ -29,7 +28,13 @@ public abstract class ElementoActivo extends Elemento implements Puntuable{
 		return ultimaDireccion;
 	}
 	
-	//Funcionalidad
+	
+	//Métodos de apoyo para actualizar
+	protected abstract boolean quiereMoverse(ContextoVisibilidad cv);
+		
+	protected abstract Direccion direccionSiguienteMovimiento(ContextoVisibilidad cv);
+	
+	//Funcionalidad: método plantilla
 	public final void actualizar(ContextoVisibilidad cv) {
 		if(quiereMoverse(cv)) {
 			int tiempoTranscurrido = (int) Duration.between(ultimoMovimiento, LocalDateTime.now()).getSeconds();
@@ -43,10 +48,5 @@ public abstract class ElementoActivo extends Elemento implements Puntuable{
 			}
 		}
 	}
-
-	//Métodos de apoyo para actualizar
-	protected abstract boolean quiereMoverse(ContextoVisibilidad cv);
-	
-	protected abstract Direccion direccionSiguienteMovimiento(ContextoVisibilidad cv);
 	
 }

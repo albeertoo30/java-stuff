@@ -1,4 +1,4 @@
-package topos.juego;
+package topos.elementos;
 
 public interface Puntuable {
 	

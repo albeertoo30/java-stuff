@@ -1,6 +1,6 @@
 package topos.geometria;
 
-public record Point(int x, int y) {
+public record Point(int x, int y) implements Comparable<Point>{
 
 	//constantes
 	public static final int DESPLAZAMIENTO_DEFAULT = 1;
@@ -27,5 +27,15 @@ public record Point(int x, int y) {
 	            break;
 	    }
 	    return desplazado;
+	}
+
+	@Override
+	public int compareTo(Point otro) {
+		int criterio1 = this.y - otro.y;
+		if(criterio1 == 0) {
+			int criterio2 = this.x - otro.x;
+			return criterio2;
+		}
+		return criterio1;
 	}
 }

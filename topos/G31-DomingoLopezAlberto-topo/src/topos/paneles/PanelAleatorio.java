@@ -28,11 +28,17 @@ public class PanelAleatorio extends Panel {
 		return "imagenes/panel-aleatorio.gif";
 	}
 
+	@Override
+	public Object clone() {
+		return (PanelAleatorio) super.clone();
+	}
+
 	/* no es necesario
 	@Override
 	public String toString() {
 	    return super.toString();  // No tiene atributos propios, solo hereda
 	}*/
+	
 	
 
 }
